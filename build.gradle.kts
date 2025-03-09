@@ -17,3 +17,10 @@ dependencies {
 tasks.test {
     useJUnitPlatform()
 }
+
+tasks.jar {
+    manifest {
+        attributes["Main-Class"] = "org.launcher.Main" // Change this to your main class
+    }
+    from(sourceSets.main.get().output)
+}

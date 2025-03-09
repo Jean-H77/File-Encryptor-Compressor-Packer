@@ -3,64 +3,56 @@ package org.launcher;
 import javax.crypto.SecretKey;
 import java.io.File;
 
-import static org.launcher.Main.decryptData;
-import static org.launcher.Main.encryptData;
 import static org.launcher.utils.FileUtils.*;
 import static org.launcher.utils.KeyUtils.loadAESKey;
 
-public class Cipher {
+public class Encryptor {
+    public enum Result { NO_DIRECTORY, NO_FILES, SUCCESS}
 
-    private String base64Key;
+    public static byte[] encryptData(byte[] data, SecretKey key) throws Exception {
+        javax.crypto.Cipher cipher = javax.crypto.Cipher.getInstance("AES");
+        cipher.init(javax.crypto.Cipher.ENCRYPT_MODE, key);
+        return cipher.doFinal(data);
+    }
 
-    public static void processFiles(String base64Key) {
-        File directory = new File("./raw/");
-        File encryptedDirectory = new File("./encrypted/");
-        File decryptedDirectory = new File("./decrypted/");
+    public static byte[] decryptData(byte[] encryptedData, SecretKey key) throws Exception {
+        javax.crypto.Cipher cipher = javax.crypto.Cipher.getInstance("AES");
+        cipher.init(javax.crypto.Cipher.DECRYPT_MODE, key);
+        return cipher.doFinal(encryptedData);
+    }
 
-        // Create directories if they don't exist
-        if (!encryptedDirectory.exists()) {
-            encryptedDirectory.mkdirs();
-        }
-        if (!decryptedDirectory.exists()) {
-            decryptedDirectory.mkdirs();
-        }
+    public static Result encrypt(String base64Key) {
+        File directory = new File("./models/");
 
-        // Check if directory exists
         if (!directory.exists() || !directory.isDirectory()) {
-            System.out.println("The raw directory doesn't exist or is not a directory.");
-            return;
+            System.out.println("The models directory doesn't exist or is not a directory.");
+            return Result.NO_DIRECTORY;
         }
 
         File[] fileArray = directory.listFiles();
         if (fileArray == null || fileArray.length == 0) {
             System.out.println("No files in the raw directory.");
-            return;
+            return Result.NO_FILES;
         }
 
-        // Process each file
+        createDirectory("./encrypted/");
+
+        SecretKey secretKey = loadAESKey(base64Key);
         for (File modelFile : fileArray) {
             String fileName = modelFile.getName();
             try {
                 String filePath = modelFile.getAbsolutePath();
                 byte[] originalData = readFile(filePath);
-                if (originalData == null) return;
+                if (originalData == null) continue;
 
-                // Encrypt the data
-                SecretKey secretKey = loadAESKey(base64Key);
                 byte[] encryptedData = encryptData(originalData, secretKey);
 
-                // Save encrypted file immediately
                 saveEncryptedFile(encryptedData, "./encrypted/" + fileName);
-
-                // Decrypt the data
-                byte[] decryptedData = decryptData(encryptedData, secretKey);
-
-                // Save decrypted file after decryption process
-                saveDecryptedFile(decryptedData, "./decrypted/" + fileName);
-
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
+
+        return Result.SUCCESS;
     }
 }
