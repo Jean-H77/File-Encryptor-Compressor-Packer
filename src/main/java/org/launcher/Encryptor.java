@@ -1,13 +1,22 @@
 package org.launcher;
 
+import org.launcher.utils.CompressionUtils;
+
 import javax.crypto.SecretKey;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
 
 import static org.launcher.utils.FileUtils.*;
 import static org.launcher.utils.KeyUtils.loadAESKey;
 
 public class Encryptor {
     public enum Result { NO_DIRECTORY, NO_FILES, SUCCESS}
+
+    static ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 
     public static byte[] encryptData(byte[] data, SecretKey key) throws Exception {
         javax.crypto.Cipher cipher = javax.crypto.Cipher.getInstance("AES");
@@ -21,7 +30,7 @@ public class Encryptor {
         return cipher.doFinal(encryptedData);
     }
 
-    public static Result encrypt(String base64Key) {
+    public static Result encrypt(String base64Key) throws Exception {
         File directory = new File("./models/");
 
         if (!directory.exists() || !directory.isDirectory()) {
@@ -37,22 +46,26 @@ public class Encryptor {
 
         createDirectory("./encrypted/");
 
-        SecretKey secretKey = loadAESKey(base64Key);
         for (File modelFile : fileArray) {
             String fileName = modelFile.getName();
             try {
                 String filePath = modelFile.getAbsolutePath();
-                byte[] originalData = readFile(filePath);
+                byte[] originalData = readFile(filePath,
+                        Integer.parseInt(fileName.replace(".dat", "")));
                 if (originalData == null) continue;
-
-                byte[] encryptedData = encryptData(originalData, secretKey);
-
-                saveEncryptedFile(encryptedData, "./encrypted/" + fileName);
+                buffer.writeBytes(originalData);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
 
+        SecretKey secretKey = loadAESKey(base64Key);
+        System.out.println(Base64.getEncoder().encodeToString(base64Key.getBytes()));
+        byte[] encryptedData = encryptData(buffer.toByteArray(), secretKey);
+        saveEncryptedFile(encryptedData, "./encrypted/cache_m0_temp.dat");
+
+        CompressionUtils.compressFile("./encrypted/cache_m0_temp.dat", "./encrypted/cache_m0.dat");
+        new File("./encrypted/cache_m0_temp.dat").delete();
         return Result.SUCCESS;
     }
 }

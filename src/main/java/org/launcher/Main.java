@@ -43,7 +43,12 @@ public class Main extends JFrame {
 
         encryptButton.addActionListener(_ -> {
             String base64Key = textField.getText();
-            Encryptor.Result result = Encryptor.encrypt(base64Key);
+            Encryptor.Result result = null;
+            try {
+                result = Encryptor.encrypt(base64Key);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
 
             if(result == Encryptor.Result.SUCCESS) {
                 JOptionPane.showMessageDialog(null, "Encryption successfully");

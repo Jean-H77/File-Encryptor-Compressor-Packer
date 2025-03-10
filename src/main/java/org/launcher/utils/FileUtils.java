@@ -2,18 +2,25 @@ package org.launcher.utils;
 
 import javax.swing.*;
 import java.io.*;
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
 
 public final class FileUtils {
     private FileUtils() {}
 
-    public static byte[] readFile(String path) {
+    public static byte[] readFile(String path, int modelId) {
         try {
             File file = new File(path);
-            byte[] data = new byte[(int) file.length()];
+            ByteBuffer buffer = ByteBuffer.allocate((int) file.length() + 8);
+           // byte[] data = new byte[(int) file.length() + 3];
+            buffer.putInt(modelId);
             try (DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(file)))) {
-                dis.readFully(data);
+                byte[] bytes = dis.readAllBytes();
+                buffer.putInt(bytes.length);
+                buffer.put(bytes);
+                System.out.println("Put: " + modelId + " length: " + bytes.length);
             }
-            return data;
+            return buffer.array();
         } catch (IOException e) {
             System.out.println("Error reading file: " + path);
             e.printStackTrace();
