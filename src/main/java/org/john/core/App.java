@@ -80,7 +80,7 @@ public class App  {
 
     private JPanel getInformationPanel() {
         JPanel informationPanel = new JPanel(new GridBagLayout());
-        informationPanel.setBorder(BorderFactory.createTitledBorder("Information"));
+        informationPanel.setBorder(BorderFactory.createTitledBorder("Configuration"));
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.anchor = GridBagConstraints.WEST;
