@@ -2,35 +2,31 @@ package org.launcher.utils;
 
 import javax.swing.*;
 import java.io.*;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 
 public final class FileUtils {
+
     private FileUtils() {}
 
     public static byte[] readFile(String path, int modelId) {
         try {
             File file = new File(path);
             ByteBuffer buffer = ByteBuffer.allocate((int) file.length() + 8);
-           // byte[] data = new byte[(int) file.length() + 3];
             buffer.putInt(modelId);
             try (DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(file)))) {
                 byte[] bytes = dis.readAllBytes();
                 buffer.putInt(bytes.length);
                 buffer.put(bytes);
-                System.out.println("Put: " + modelId + " length: " + bytes.length);
             }
             return buffer.array();
         } catch (IOException e) {
-            System.out.println("Error reading file: " + path);
-            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error saving encrypted file: " + path + "::" + e);
             return null;
         }
     }
 
     public static void createDirectory(String path) {
         File encryptedDirectory = new File(path);
-
         if (!encryptedDirectory.exists()) {
             encryptedDirectory.mkdirs();
         }
@@ -39,20 +35,10 @@ public final class FileUtils {
     public static void saveEncryptedFile(byte[] encryptedData, String outputPath) {
         try (FileOutputStream fos = new FileOutputStream(outputPath)) {
             fos.write(encryptedData);
-            System.out.println("Encrypted file saved to: " + outputPath);
+            System.out.println("Saved encrypted file: " + outputPath);
         } catch (IOException e) {
             System.out.println("Error saving encrypted file: " + outputPath);
-            e.printStackTrace();
-        }
-    }
-
-    public static void saveDecryptedFile(byte[] decryptedData, String outputPath) {
-        try (FileOutputStream fos = new FileOutputStream(outputPath)) {
-            fos.write(decryptedData);
-            System.out.println("Decrypted file saved to: " + outputPath);
-        } catch (IOException e) {
-            System.out.println("Error saving decrypted file: " + outputPath);
-            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error saving encrypted file: " + outputPath + "::" + e);
         }
     }
 
@@ -78,4 +64,7 @@ public final class FileUtils {
         return base64Content.toString();
     }
 
+    public static boolean exists(String path) {
+        return new File(path).exists();
+    }
 }

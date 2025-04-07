@@ -3,12 +3,15 @@ package org.launcher;
 import org.launcher.utils.CompressionUtils;
 
 import javax.crypto.SecretKey;
+import javax.swing.*;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static org.launcher.utils.FileUtils.*;
 import static org.launcher.utils.KeyUtils.loadAESKey;
@@ -16,7 +19,7 @@ import static org.launcher.utils.KeyUtils.loadAESKey;
 public class Encryptor {
     public enum Result { NO_DIRECTORY, NO_FILES, SUCCESS}
 
-    static ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+    private static final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 
     public static byte[] encryptData(byte[] data, SecretKey key) throws Exception {
         javax.crypto.Cipher cipher = javax.crypto.Cipher.getInstance("AES");
@@ -24,23 +27,15 @@ public class Encryptor {
         return cipher.doFinal(data);
     }
 
-    public static byte[] decryptData(byte[] encryptedData, SecretKey key) throws Exception {
-        javax.crypto.Cipher cipher = javax.crypto.Cipher.getInstance("AES");
-        cipher.init(javax.crypto.Cipher.DECRYPT_MODE, key);
-        return cipher.doFinal(encryptedData);
-    }
-
     public static Result encrypt(String base64Key) throws Exception {
         File directory = new File("./models/");
 
         if (!directory.exists() || !directory.isDirectory()) {
-            System.out.println("The models directory doesn't exist or is not a directory.");
             return Result.NO_DIRECTORY;
         }
 
         File[] fileArray = directory.listFiles();
         if (fileArray == null || fileArray.length == 0) {
-            System.out.println("No files in the raw directory.");
             return Result.NO_FILES;
         }
 
@@ -50,12 +45,12 @@ public class Encryptor {
             String fileName = modelFile.getName();
             try {
                 String filePath = modelFile.getAbsolutePath();
-                byte[] originalData = readFile(filePath,
-                        Integer.parseInt(fileName.replace(".dat", "")));
+                byte[] originalData = readFile(filePath,Integer.parseInt(fileName.replace(".dat", "")));
+
                 if (originalData == null) continue;
                 buffer.writeBytes(originalData);
             } catch (Exception e) {
-                e.printStackTrace();
+                JOptionPane.showMessageDialog(null, "Error Encrypting: " + e);
             }
         }
 

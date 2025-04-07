@@ -9,7 +9,6 @@ import java.util.Base64;
 public final class KeyUtils {
     private KeyUtils() {}
 
-    // Method to load AES key from Base64 encoded string
     public static SecretKey loadAESKey(String base64Key) {
         byte[] decodedKey = Base64.getDecoder().decode(base64Key);
         return new SecretKeySpec(decodedKey, "AES");
