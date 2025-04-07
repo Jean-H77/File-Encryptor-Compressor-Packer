@@ -1,5 +1,8 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 plugins {
     id("java")
+    id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 
 group = "org.launcher"
@@ -18,9 +21,16 @@ tasks.test {
     useJUnitPlatform()
 }
 
-tasks.jar {
+tasks.withType<ShadowJar> {
+    archiveBaseName = "Model Encryptor"
+    archiveClassifier = ""
+    archiveVersion = ""
+
     manifest {
-        attributes["Main-Class"] = "org.launcher.Main" // Change this to your main class
+        attributes["Main-Class"] = "org.john.Main"
     }
-    from(sourceSets.main.get().output)
+}
+
+tasks.named("build") {
+    dependsOn("shadowJar")
 }

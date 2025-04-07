@@ -24,9 +24,8 @@ public class App  {
     private final JFrame frame;
     private final JTextField keyTextField;
     private final JTextArea unEncryptedModelsTextArea;
-    private final JTextArea encryptedModelsTextArea;
     private final JTextField outputTextField;
-    private final JTextField modelsTextField;
+    private final JTextField inputTextField;
     private final JButton encryptButton;
 
     private String encKey;
@@ -42,22 +41,17 @@ public class App  {
     }
 
     public App(String title, int width, int height) {
-        encKey = KeyUtils.getOrGenerateKey();
-
         frame = new JFrame(title);
         frame.setSize(width, height);
 
         outputTextField = new JTextField();
         outputTextField.setEditable(false);
 
-        modelsTextField = new JTextField();
-        modelsTextField.setEditable(false);
+        inputTextField = new JTextField();
+        inputTextField.setEditable(false);
 
         unEncryptedModelsTextArea = new JTextArea(0, 1);
         unEncryptedModelsTextArea.setEditable(false);
-
-        encryptedModelsTextArea = new JTextArea(0, 1);
-        encryptedModelsTextArea.setEditable(false);
 
         encryptButton = new JButton("Encrypt");
         encryptButton.setEnabled(false);
@@ -71,6 +65,7 @@ public class App  {
     private void create() {
         frame.setResizable(false);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setLocationRelativeTo(null);
         frame.setLayout(new BorderLayout(10, 10));
 
         JPanel contentPanel = new JPanel(new BorderLayout(10, 10));
@@ -140,11 +135,11 @@ public class App  {
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.weightx = 0;
-        informationPanel.add(new JLabel("Models Path:"), gbc);
+        informationPanel.add(new JLabel("Input Path:"), gbc);
 
         gbc.gridx = 1;
         gbc.weightx = 1.0;
-        informationPanel.add(modelsTextField, gbc);
+        informationPanel.add(inputTextField, gbc);
 
         gbc.gridx = 2;
         gbc.gridy = 2;
@@ -154,15 +149,18 @@ public class App  {
             JFileChooser chooser = new JFileChooser();
             chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
             if (chooser.showOpenDialog(informationPanel) == JFileChooser.APPROVE_OPTION) {
-                if(FileUtils.isEmpty(chooser.getSelectedFile().getAbsolutePath())) {
+                if(FileUtils.exists(chooser.getSelectedFile().getAbsolutePath()) && FileUtils.isEmpty(chooser.getSelectedFile().getAbsolutePath())) {
                     JOptionPane.showMessageDialog(null, "Models path cannot be empty");
                     return;
                 }
 
-                modelsTextField.setText(chooser.getSelectedFile().getAbsolutePath());
-                loadedModels = Model.getModelList(modelsTextField.getText());
+                inputTextField.setText(chooser.getSelectedFile().getAbsolutePath());
+                encKey = KeyUtils.getOrGenerateKey(inputTextField.getText());
+                System.out.println("New Key: " + encKey);
+                keyTextField.setText(encKey);
 
-                for(var m : loadedModels) { //C:\Users\jeanh\Desktop\Encryptor\models
+                loadedModels = Model.getModelList(inputTextField.getText());
+                for(var m : loadedModels) {
                     unEncryptedModelsTextArea.append(m.getId() + ".dat\n"); // Adding .dat for visual only, checking if extension is .dat beforehand
                 }
 
@@ -186,8 +184,12 @@ public class App  {
 
     private void generateKeyAction() {
         try {
+            if(!FileUtils.exists(inputTextField.getText())) {
+                JOptionPane.showMessageDialog(null, "Must specify an input path to generate a key.pem");
+                return;
+            }
             encKey = KeyUtils.GenerateBase64Key();
-            FileUtils.saveString(encKey, "./key.pem");
+            FileUtils.saveString(encKey, inputTextField.getText()+"/key.pem");
             keyTextField.setText(encKey);
         } catch (IOException | NoSuchAlgorithmException e) {
             JOptionPane.showMessageDialog(null, "Cannot create .pem file: " + e.getMessage());

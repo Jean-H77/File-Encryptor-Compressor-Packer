@@ -23,15 +23,15 @@ public final class KeyUtils {
         return Base64.getEncoder().encodeToString(secretKey.getEncoded());
     }
 
-    public static String getOrGenerateKey() {
+    public static String getOrGenerateKey(String inputPath) {
         String key;
-        String path = "./key.pem";
+        String path = inputPath + "/key.pem";
         try {
             if(!FileUtils.exists(path)) {
                 key = KeyUtils.GenerateBase64Key();
                 FileUtils.saveString(key, path);
             } else {
-                key = FileUtils.readBase64Key();
+                key = FileUtils.readBase64Key(inputPath);
             }
 
             return key;

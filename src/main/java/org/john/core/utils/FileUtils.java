@@ -61,9 +61,9 @@ public final class FileUtils {
         }
     }
 
-    public static String readBase64Key() {
+    public static String readBase64Key(String path) {
         StringBuilder base64Content = new StringBuilder();
-        try (BufferedReader br = new BufferedReader(new FileReader("./key.pem"))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(path+"/key.pem"))) {
             String line = br.readLine();
             if (line != null) {
                 base64Content.append(line);
