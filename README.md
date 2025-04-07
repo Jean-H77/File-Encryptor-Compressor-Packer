@@ -18,7 +18,9 @@ N is determined by the `Data Length` field.
 ## 🚀 Usage Example
 
 ```java
+
 public static void decode(byte[] buffer) {
+    // Optional: Decompress if data is compressed 
     ByteBuffer buf = ByteBuffer.wrap(buffer);
 
     while (buf.hasRemaining()) {
@@ -26,9 +28,7 @@ public static void decode(byte[] buffer) {
         int length = buf.getInt();
         byte[] modelData = new byte[length];
         buf.get(modelData);
-
-        // Optional: Decompress if data is compressed
-        // modelData = CompressionUtils.decompress(modelData);
+        
         Model.readModelData(modelData, length, modelId);
     }
 }
