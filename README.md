@@ -1,7 +1,6 @@
-# 📦 Packed Model Data Reader
+# 🔐 Model Encryptor
 
-A lightweight Java utility for reading, decompressing, and processing packed model data from binary buffers. Supports
-GZIP-compressed model payloads and custom model parsing.
+Secure Java utility for encrypted (AES-256) and compressed (GZIP) model data processing
 
 ## 📐 Packed Data Format
 
