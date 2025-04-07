@@ -19,13 +19,15 @@ public class Model {
 
     public static Model decode(File file) {
         var buffer = FileUtils.readFileToByteArray(file);
-        int id = -1;
+        int id;
 
         try {
             id = Integer.parseInt(file.getName().replace(".dat", ""));
-        } catch (NumberFormatException ignore) {}
+        } catch (NumberFormatException ignore) {
+            return null;
+        }
 
-        return id == -1 ? null : new Model(id, buffer);
+        return new Model(id, buffer);
     }
 
     public byte[] encode() {
