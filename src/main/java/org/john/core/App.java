@@ -59,10 +59,7 @@ public class App  {
         keyTextField = new JTextField(45);
         keyTextField.setText(encKey);
         keyTextField.setEditable(false);
-        create();
-    }
 
-    private void create() {
         frame.setResizable(false);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLocationRelativeTo(null);
