@@ -1,8 +1,13 @@
-package org.launcher.utils;
+package org.john.core.utils;
 
 import javax.swing.*;
 import java.io.*;
 import java.nio.ByteBuffer;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class FileUtils {
 
@@ -20,9 +25,19 @@ public final class FileUtils {
             }
             return buffer.array();
         } catch (IOException e) {
-            JOptionPane.showMessageDialog(null, "Error saving encrypted file: " + path + "::" + e);
+            JOptionPane.showMessageDialog(null, "Error reading file: " + path + "::" + e);
             return null;
         }
+    }
+
+    public static byte[] readFileToByteArray(File file) {
+        try {
+            return Files.readAllBytes(file.toPath());
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "Error reading file: " + file + "::" + e);
+        }
+        return new byte[0];
     }
 
     public static void createDirectory(String path) {
@@ -32,19 +47,17 @@ public final class FileUtils {
         }
     }
 
-    public static void saveEncryptedFile(byte[] encryptedData, String outputPath) {
+    public static void saveFile(byte[] encryptedData, String outputPath) {
         try (FileOutputStream fos = new FileOutputStream(outputPath)) {
             fos.write(encryptedData);
-            System.out.println("Saved encrypted file: " + outputPath);
         } catch (IOException e) {
-            System.out.println("Error saving encrypted file: " + outputPath);
-            JOptionPane.showMessageDialog(null, "Error saving encrypted file: " + outputPath + "::" + e);
+            JOptionPane.showMessageDialog(null, "Error saving file: " + outputPath + "::" + e);
         }
     }
 
-    public static void saveKey(String key) throws IOException {
-        try (FileWriter fileWriter = new FileWriter("./key.pem")) {
-            fileWriter.write(key);
+    public static void saveString(String contents, String path) throws IOException {
+        try (FileWriter fileWriter = new FileWriter(path)) {
+            fileWriter.write(contents);
         }
     }
 
@@ -66,5 +79,28 @@ public final class FileUtils {
 
     public static boolean exists(String path) {
         return new File(path).exists();
+    }
+
+    public static List<String> loadModels(String path) {
+        var directory = new File(path);
+        File[] fileArray = directory.listFiles();
+        List<String> fileNames = new ArrayList<>();
+        for (File modelFile : fileArray) {
+            if(!modelFile.getName().endsWith(".dat")) continue;
+            fileNames.add(modelFile.getName());
+        }
+        return fileNames;
+    }
+
+    public static boolean isEmpty(String directory) {
+        try(DirectoryStream<Path> dirStream = Files.newDirectoryStream(Path.of(directory))) {
+            return !dirStream.iterator().hasNext();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void deleteFile(String path) {
+        new File(path).delete();
     }
 }
