@@ -1,9 +1,5 @@
 # 🔐 Model Encryptor
 
-Secure Java utility for encrypted (AES-256) and compressed (GZIP) model data processing
-
-## 📐 Packed Data Format
-
 Each model entry in the byte buffer is structured as:
 
 | Field       | Size    | Description                         |
@@ -19,8 +15,16 @@ N is determined by the `Data Length` field.
 
 ```java
 
-public static void decode(byte[] buffer) {
-    // Optional: Decompress if data is compressed 
+ public static byte[] decryptData(byte[] encryptedData, SecretKey key) throws Exception {
+        Cipher cipher = Cipher.getInstance("AES");
+        cipher.init(Cipher.DECRYPT_MODE, key);
+        return cipher.doFinal(encryptedData);
+}
+
+public static void decode(File file) {
+    // Optional: Decompress if data is compressed
+    byte[] encryptedBytes = Files.readAllBytes(file.toPath());
+    byte[] decryptedBytes = decryptData(encryptedBytes, /*SECRET_KEY_HERE*/);
     ByteBuffer buf = ByteBuffer.wrap(buffer);
 
     while (buf.hasRemaining()) {
