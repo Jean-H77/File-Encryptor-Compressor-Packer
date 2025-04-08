@@ -13,23 +13,6 @@ public final class FileUtils {
 
     private FileUtils() {}
 
-    public static byte[] readFile(String path, int modelId) {
-        try {
-            File file = new File(path);
-            ByteBuffer buffer = ByteBuffer.allocate((int) file.length() + 8);
-            buffer.putInt(modelId);
-            try (DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(file)))) {
-                byte[] bytes = dis.readAllBytes();
-                buffer.putInt(bytes.length);
-                buffer.put(bytes);
-            }
-            return buffer.array();
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(null, "Error reading file: " + path + "::" + e);
-            return null;
-        }
-    }
-
     public static byte[] readFileToByteArray(File file) {
         try {
             return Files.readAllBytes(file.toPath());
@@ -81,26 +64,11 @@ public final class FileUtils {
         return new File(path).exists();
     }
 
-    public static List<String> loadModels(String path) {
-        var directory = new File(path);
-        File[] fileArray = directory.listFiles();
-        List<String> fileNames = new ArrayList<>();
-        for (File modelFile : fileArray) {
-            if(!modelFile.getName().endsWith(".dat")) continue;
-            fileNames.add(modelFile.getName());
-        }
-        return fileNames;
-    }
-
     public static boolean isEmpty(String directory) {
         try(DirectoryStream<Path> dirStream = Files.newDirectoryStream(Path.of(directory))) {
             return !dirStream.iterator().hasNext();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public static void deleteFile(String path) {
-        new File(path).delete();
     }
 }
