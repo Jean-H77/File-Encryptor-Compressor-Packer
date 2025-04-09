@@ -66,7 +66,7 @@ public class InputFileTableViewer extends JFrame {
                 Vector<String> payloadLengthRow = new Vector<>();
                 payloadLengthRow.add(String.valueOf(index));
                 payloadLengthRow.add(String.valueOf(data.length));
-                index += data.length;
+                index += 4;
                 tableModel.addRow(payloadLengthRow);
             }
 
