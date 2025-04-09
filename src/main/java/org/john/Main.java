@@ -1,10 +1,10 @@
 package org.john;
 
-import org.john.core.App;
+import org.john.core.AppGUI;
 
 public class Main  {
 
     public static void main(String[] args) {
-        new App("AES Encryptor - Created By: John", 450, 400);
+        new AppGUI("AES File Encryptor - Created By: John", 600, 600);
     }
 }

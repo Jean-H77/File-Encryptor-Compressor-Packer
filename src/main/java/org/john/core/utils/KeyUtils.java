@@ -22,23 +22,4 @@ public final class KeyUtils {
         SecretKey secretKey = keyGenerator.generateKey();
         return Base64.getEncoder().encodeToString(secretKey.getEncoded());
     }
-
-    public static String getOrGenerateKey(String inputPath) {
-        String key;
-        String path = inputPath + "/key.pem";
-        try {
-            if(!FileUtils.exists(path)) {
-                key = KeyUtils.GenerateBase64Key();
-                FileUtils.saveString(key, path);
-            } else {
-                key = FileUtils.readBase64Key(inputPath);
-            }
-
-            return key;
-        } catch (NoSuchAlgorithmException | IOException e) {
-            JOptionPane.showMessageDialog(null, e.getMessage(), "Error Generating key", JOptionPane.ERROR_MESSAGE);
-        }
-
-        return null;
-    }
 }
