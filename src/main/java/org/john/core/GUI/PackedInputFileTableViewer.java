@@ -14,7 +14,7 @@ public class PackedInputFileTableViewer extends JFrame {
 
     public int totalBytes;
 
-    public PackedInputFileTableViewer() {
+    private PackedInputFileTableViewer() {
         setTitle("String Data Viewer");
         setSize(600, 400);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);

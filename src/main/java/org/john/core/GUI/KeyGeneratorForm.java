@@ -34,10 +34,10 @@ public class KeyGeneratorForm extends JFrame {
     private final SecureRandom random = new SecureRandom();
 
     public static void open() {
-        SwingUtilities.invokeLater(() -> new KeyGeneratorForm().createFrame());
+        SwingUtilities.invokeLater(KeyGeneratorForm::new);
     }
 
-    private void createFrame() {
+    private KeyGeneratorForm() {
         setTitle("AES Key Configuration");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setSize(400, 450);
