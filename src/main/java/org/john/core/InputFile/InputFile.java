@@ -27,28 +27,30 @@ public class InputFile {
 
     public byte[] encode() {
         var config = Config.getInstance();
-        int length = getPayloadLength();
+        int length = getBufferLength();
 
         var buffer = ByteBuffer.allocate(length);
 
         if(config.isIncludeFileName()) {
+            buffer.putInt(name.length());
             buffer.put(name.getBytes());
         }
 
         if(config.isIncludeFileLength()) {
-            buffer.putInt(length);
+            buffer.putInt(data.length);
         }
 
         buffer.put(data);
         return buffer.array();
     }
 
-    public int getPayloadLength() {
+    public int getBufferLength() {
         var config = Config.getInstance();
         int length = data.length;
 
         if(config.isIncludeFileName()) {
-            length += name.length();
+            length += 4;
+            length += name.getBytes().length;
         }
 
         if(config.isIncludeFileLength()) {

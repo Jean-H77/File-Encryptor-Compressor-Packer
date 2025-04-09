@@ -8,11 +8,11 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.Vector;
 
-public class InputFileTableViewer extends JFrame {
+public class PackedInputFileTableViewer extends JFrame {
 
     public int totalBytes;
 
-    public InputFileTableViewer() {
+    public PackedInputFileTableViewer() {
         setTitle("String Data Viewer");
         setSize(600, 400);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);

@@ -1,7 +1,7 @@
 package org.john.core;
 
 import org.apache.commons.io.FilenameUtils;
-import org.john.core.InputFile.InputFileTableViewer;
+import org.john.core.InputFile.PackedInputFileTableViewer;
 import org.john.core.config.Config;
 import org.john.core.InputFile.InputFile;
 import org.john.core.utils.CompressionUtils;
@@ -305,60 +305,73 @@ public class AppGUI {
 
     private void encryptAction() {
         var config = Config.getInstance();
-        if(config.getEncryptionKey() == null) {
-            JOptionPane.showMessageDialog(null, "Encryption Key cannot be empty");
+
+        if (config.getEncryptionKey() == null) {
+            showError("Encryption Key cannot be empty");
             return;
         }
 
         encryptButton.setEnabled(false);
-        String outputPath = String.valueOf(Config.getInstance().getOutputDir());
+        String outputPath = String.valueOf(config.getOutputDir());
 
-        if(!FileUtils.exists(outputPath)) {
-            JOptionPane.showMessageDialog(null, "Cannot find output path: " + outputPath);
+        if (!FileUtils.exists(outputPath)) {
+            showError("Cannot find output path: " + outputPath);
             return;
         }
 
-        if(!config.isPack()) {
-            var unPackedPath = outputPath + "/unpacked/";
-            createDirectory(unPackedPath);
-            var loadedInputFiles = InputFile.getLoadedFiles();
+        String unpackedPath = outputPath + "/unpacked/";
+        String packedPath = outputPath + "/packed/";
 
-            if(config.isCompress()) {
-                for(var inputFile : loadedInputFiles) {
-                    var encryptedData = encryptData(inputFile.getData());
-                    try {
-                        var newFileName = FilenameUtils.removeExtension(inputFile.getName()) + ".gz";
-                        CompressionUtils.compressFile(encryptedData, unPackedPath + newFileName);
-                    } catch (Exception e) {
-                        JOptionPane.showMessageDialog(null, "Cannot compress file: " + e.getMessage());
-                    }
-                }
-            } else {
-                for(var inputFile : loadedInputFiles) {
-                    var encryptedData = encryptData(inputFile.getData());
-                    saveFile(encryptedData, unPackedPath + inputFile.getName());
-                }
-            }
-
+        if (!config.isPack()) {
+            processIndividualFiles(unpackedPath);
         } else {
-            var buffer = InputFile.packLoadedFiles();
-            if(config.isCompress()) {
-                var packedFileName = "packed.gz";
-                var packedPath = outputPath + "/packed/";
-                var encryptedData = encryptData(buffer);
-                createDirectory(packedPath);
-                try {
-                    CompressionUtils.compressFile(encryptedData, packedPath + packedFileName);
-                } catch (RuntimeException | IOException e) {
-                    JOptionPane.showMessageDialog(null, "Cannot pack: " + e.getMessage());
-                }
-            }
-
-            new InputFileTableViewer();
+            processPackedFiles(unpackedPath);
         }
 
         JOptionPane.showMessageDialog(null, "Encrypted Models successfully");
         encryptButton.setEnabled(true);
+    }
+
+    private void processIndividualFiles(String unpackedPath) {
+        createDirectory(unpackedPath);
+        var loadedInputFiles = InputFile.getLoadedFiles();
+
+        for (var inputFile : loadedInputFiles) {
+            byte[] encryptedData = encryptData(inputFile.getData());
+
+            if (Config.getInstance().isCompress()) {
+                try {
+                    String compressedName = FilenameUtils.removeExtension(inputFile.getName()) + ".gz";
+                    CompressionUtils.compressFile(encryptedData, unpackedPath + compressedName);
+                } catch (Exception e) {
+                    showError("Cannot compress file: " + e.getMessage());
+                }
+            } else {
+                saveFile(encryptedData, unpackedPath + inputFile.getName());
+            }
+        }
+    }
+
+    private void processPackedFiles(String packedPath) {
+        byte[] buffer = InputFile.packLoadedFiles();
+        byte[] encryptedData = encryptData(buffer);
+        createDirectory(packedPath);
+
+        if (Config.getInstance().isCompress()) {
+            try {
+                CompressionUtils.compressFile(encryptedData, packedPath + "packed.gz");
+            } catch (RuntimeException | IOException e) {
+                showError("Cannot pack: " + e.getMessage());
+            }
+        } else {
+            saveFile(encryptedData, packedPath + "packed.dat");
+        }
+
+        new PackedInputFileTableViewer();
+    }
+
+    private void showError(String message) {
+        JOptionPane.showMessageDialog(null, message);
     }
 
     private static byte[] encryptData(byte[] data)  {
