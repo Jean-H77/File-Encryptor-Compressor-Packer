@@ -18,6 +18,7 @@ import java.awt.*;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.URL;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
@@ -48,6 +49,11 @@ public class AppGUI {
         frame.setResizable(false);
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.setLocationRelativeTo(null);
+
+        URL iconUrl = getClass().getResource("/icon.png");
+        assert iconUrl != null;
+        ImageIcon icon = new ImageIcon(iconUrl);
+        frame.setIconImage(icon.getImage());
 
         outputTextField = new JTextField();
         outputTextField.setEditable(false);
@@ -178,20 +184,6 @@ public class AppGUI {
         JCheckBox compress = new JCheckBox("GZIP Compress", false);
         compress.addActionListener(_ -> Config.getInstance().setCompress(compress.isSelected()));
         informationPanel.add(compress, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy = 6;
-        gbc.gridwidth = 2;
-        JPanel configButtonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        JButton loadConfig = new JButton("Load Config");
-        loadConfig.addActionListener(_ -> showConfigFileChooser(false));
-        configButtonPanel.add(loadConfig);
-
-        JButton saveConfig = new JButton("Save Config");
-        saveConfig.addActionListener(_ -> showConfigFileChooser(true));
-        configButtonPanel.add(saveConfig);
-
-        informationPanel.add(configButtonPanel, gbc);
 
         return informationPanel;
     }
