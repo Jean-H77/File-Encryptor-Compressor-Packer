@@ -53,6 +53,7 @@ public record InputFile(String name, byte[] data) {
     }
 
     public static List<InputFile> decodeAllInDir() {
+        loadedFiles.clear();
         var path = String.valueOf(Context.getInstance().getInputDir());
         var directory = new File(path);
         var inputFiles = new ArrayList<InputFile>();
@@ -72,7 +73,8 @@ public record InputFile(String name, byte[] data) {
         for (var inputFile : fileArray)
             inputFiles.add(decode(inputFile));
 
-        return inputFiles;
+        loadedFiles.addAll(inputFiles);
+        return loadedFiles;
     }
 
     public static byte[] packLoadedFiles() {

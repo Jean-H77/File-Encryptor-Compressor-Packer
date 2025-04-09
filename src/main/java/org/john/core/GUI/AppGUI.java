@@ -220,7 +220,6 @@ public class AppGUI extends JFrame {
             }
             Context.getInstance().setInputDir(path);
             var loadedInputFiles = InputFile.decodeAllInDir();
-            InputFile.getLoadedFiles().addAll(loadedInputFiles);
 
             unEncryptedModelsTextArea.setText("");
             for (var m : loadedInputFiles) {
