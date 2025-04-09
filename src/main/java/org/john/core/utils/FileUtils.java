@@ -1,5 +1,8 @@
 package org.john.core.utils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+
 import javax.swing.*;
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -12,6 +15,9 @@ import java.util.List;
 public final class FileUtils {
 
     private FileUtils() {}
+
+    private static final ObjectMapper mapper = new ObjectMapper()
+            .enable(SerializationFeature.INDENT_OUTPUT, SerializationFeature.FAIL_ON_EMPTY_BEANS);
 
     public static byte[] readFileToByteArray(File file) {
         try {
@@ -38,28 +44,6 @@ public final class FileUtils {
         }
     }
 
-    public static void saveString(String contents, String path) throws IOException {
-        try (FileWriter fileWriter = new FileWriter(path)) {
-            fileWriter.write(contents);
-        }
-    }
-
-    public static String readBase64Key(String path) {
-        StringBuilder base64Content = new StringBuilder();
-        try (BufferedReader br = new BufferedReader(new FileReader(path+"/key.pem"))) {
-            String line = br.readLine();
-            if (line != null) {
-                base64Content.append(line);
-            }
-        } catch (IOException e) {
-            System.out.println("Error reading the PEM file.");
-            JOptionPane.showMessageDialog(null, "Error reading the PEM file.");
-            return null;
-        }
-
-        return base64Content.toString();
-    }
-
     public static boolean exists(String path) {
         return new File(path).exists();
     }
@@ -70,5 +54,13 @@ public final class FileUtils {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static <T> T jsonFromFile(File file, Class<T> clazz) throws IOException {
+        return mapper.readValue(file, clazz);
+    }
+
+    public static void jsonToFile(File file, Object obj) throws IOException {
+        mapper.writeValue(file, obj);
     }
 }

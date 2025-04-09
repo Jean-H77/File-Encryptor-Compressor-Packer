@@ -1,10 +1,11 @@
-package org.john.core.config;
+package org.john.core.context;
 
-import java.nio.file.Path;
+import org.john.core.AES.AESInfo;
 
-public class Config {
+public class Context {
 
-    private String encryptionKey;
+    private AESInfo AESInfo;
+
     private String outputDir;
     private String inputDir;
 
@@ -13,14 +14,18 @@ public class Config {
     private boolean includeFileLength;
     private boolean compress;
 
-    private static Config instance;
+    private static Context instance;
 
-    public String getEncryptionKey() {
-        return encryptionKey;
+    public AESInfo getKeyAndCipher() {
+        return AESInfo;
     }
 
-    public void setEncryptionKey(String encryptionKey) {
-        this.encryptionKey = encryptionKey;
+    public AESInfo getAESInfo() {
+        return AESInfo;
+    }
+
+    public void setAESInfo(AESInfo AESInfo) {
+        this.AESInfo = AESInfo;
     }
 
     public String getOutputDir() {
@@ -71,9 +76,9 @@ public class Config {
         this.pack = pack;
     }
 
-    public static Config getInstance() {
+    public static Context getInstance() {
         if(instance == null) {
-            instance = new Config();
+            instance = new Context();
         }
         return instance;
     }

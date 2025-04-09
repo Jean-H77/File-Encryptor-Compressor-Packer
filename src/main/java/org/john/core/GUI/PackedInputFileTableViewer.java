@@ -1,10 +1,12 @@
-package org.john.core.InputFile;
+package org.john.core.GUI;
 
-import org.john.core.config.Config;
+import org.john.core.InputFile.InputFile;
+import org.john.core.context.Context;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Vector;
 
@@ -18,6 +20,11 @@ public class PackedInputFileTableViewer extends JFrame {
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
 
+        URL iconUrl = getClass().getResource("/viewer_icon.png");
+        assert iconUrl != null;
+        ImageIcon icon = new ImageIcon(iconUrl);
+        setIconImage(icon.getImage());
+
         JTable table = getJTable();
         table.setFont(new Font("Monospaced", Font.PLAIN, 14));
 
@@ -26,6 +33,10 @@ public class PackedInputFileTableViewer extends JFrame {
         JLabel summary = new JLabel("Total bytes: " + totalBytes);
         add(summary, BorderLayout.SOUTH);
         setVisible(true);
+    }
+
+    public static void open() {
+        SwingUtilities.invokeLater(PackedInputFileTableViewer::new);
     }
 
     private JTable getJTable() {
@@ -39,13 +50,13 @@ public class PackedInputFileTableViewer extends JFrame {
         tableModel.addColumn("Payload");
 
         var loadedInputFiles = InputFile.getLoadedFiles();
-        boolean includeFileName = Config.getInstance().isIncludeFileName();
-        boolean includeFileLength = Config.getInstance().isIncludeFileLength();
+        boolean includeFileName = Context.getInstance().isIncludeFileName();
+        boolean includeFileLength = Context.getInstance().isIncludeFileLength();
 
         int index = 0;
         for(var loadedFile : loadedInputFiles) {
-            var name = loadedFile.getName();
-            var data = loadedFile.getData();
+            var name = loadedFile.name();
+            var data = loadedFile.data();
 
             if(includeFileName) {
                 Vector<String> fileNameLengthRow = new Vector<>();

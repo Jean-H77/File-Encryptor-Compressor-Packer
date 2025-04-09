@@ -1,59 +1,49 @@
-package org.john.core;
+package org.john.core.GUI;
 
 import org.apache.commons.io.FilenameUtils;
-import org.john.core.InputFile.PackedInputFileTableViewer;
-import org.john.core.config.Config;
+import org.john.core.AES.AESInfo;
+import org.john.core.context.Context;
 import org.john.core.InputFile.InputFile;
 import org.john.core.utils.CompressionUtils;
 import org.john.core.utils.FileUtils;
-import org.john.core.utils.KeyUtils;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
+import javax.crypto.*;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URL;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
+import java.nio.charset.StandardCharsets;
 
 import static org.john.core.utils.FileUtils.*;
-import static org.john.core.utils.KeyUtils.loadAESKey;
 
-public class AppGUI {
+public class AppGUI extends JFrame {
 
-    private final JFrame frame;
+    static {
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     private final JTextField keyTextField;
     private final JTextArea unEncryptedModelsTextArea;
     private final JTextField outputTextField;
     private final JTextField inputTextField;
     private final JButton encryptButton;
 
-    static {
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (ClassNotFoundException | UnsupportedLookAndFeelException | IllegalAccessException |
-                 InstantiationException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public AppGUI(String title, int width, int height) {
-        frame = new JFrame(title);
-        frame.setSize(width, height);
-        frame.setResizable(false);
-        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.setLocationRelativeTo(null);
+        setTitle(title);
+        setSize(width, height);
+        setResizable(false);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setLocationRelativeTo(null);
 
         URL iconUrl = getClass().getResource("/icon.png");
         assert iconUrl != null;
         ImageIcon icon = new ImageIcon(iconUrl);
-        frame.setIconImage(icon.getImage());
+        setIconImage(icon.getImage());
 
         outputTextField = new JTextField();
         outputTextField.setEditable(false);
@@ -73,7 +63,7 @@ public class AppGUI {
 
         JPanel contentPanel = new JPanel(new BorderLayout(10, 10));
         contentPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        frame.add(contentPanel);
+        add(contentPanel);
 
         contentPanel.add(getFilesPanel(), BorderLayout.CENTER);
         contentPanel.add(getInformationPanel(), BorderLayout.NORTH);
@@ -81,7 +71,7 @@ public class AppGUI {
         encryptButton.addActionListener(_ -> encryptAction());
         contentPanel.add(encryptButton, BorderLayout.SOUTH);
 
-        frame.setVisible(true);
+        setVisible(true);
     }
 
     private JPanel getInformationPanel() {
@@ -100,13 +90,12 @@ public class AppGUI {
 
         gbc.gridx = 1;
         gbc.weightx = 1.0;
-        keyTextField.setText(Config.getInstance().getEncryptionKey());
         informationPanel.add(keyTextField, gbc);
 
         gbc.gridx = 2;
         gbc.weightx = 0;
         JButton generateKeyButton = new JButton("Generate Key");
-        generateKeyButton.addActionListener(_ -> generateKeyAction());
+        generateKeyButton.addActionListener(_ -> KeyGeneratorForm.open());
         informationPanel.add(generateKeyButton, gbc);
 
         gbc.gridx = 3;
@@ -152,13 +141,13 @@ public class AppGUI {
         gbc.gridy = 4;
         gbc.weightx = 0;
         JCheckBox includeFileName = new JCheckBox("Include file name", false);
-        includeFileName.addActionListener(_ -> Config.getInstance().setIncludeFileName(includeFileName.isSelected()));
+        includeFileName.addActionListener(_ -> Context.getInstance().setIncludeFileName(includeFileName.isSelected()));
         includeFileName.setEnabled(false);
         informationPanel.add(includeFileName, gbc);
 
         gbc.gridx = 1;
         JCheckBox includeFileLength = new JCheckBox("Include file length", false);
-        includeFileLength.addActionListener(_ -> Config.getInstance().setIncludeFileLength(includeFileLength.isSelected()));
+        includeFileLength.addActionListener(_ -> Context.getInstance().setIncludeFileLength(includeFileLength.isSelected()));
         includeFileLength.setEnabled(false);
         informationPanel.add(includeFileLength, gbc);
 
@@ -167,12 +156,12 @@ public class AppGUI {
         gbc.weightx = 0;
         JCheckBox pack = new JCheckBox("Pack", false);
         pack.addActionListener(_ -> {
-            if(pack.isSelected()) {
-                Config.getInstance().setPack(true);
+            if (pack.isSelected()) {
+                Context.getInstance().setPack(true);
                 includeFileName.setEnabled(true);
                 includeFileLength.setEnabled(true);
             } else {
-                Config.getInstance().setPack(false);
+                Context.getInstance().setPack(false);
                 includeFileName.setEnabled(false);
                 includeFileLength.setEnabled(false);
             }
@@ -182,7 +171,7 @@ public class AppGUI {
         gbc.gridx = 0;
         gbc.gridy = 5;
         JCheckBox compress = new JCheckBox("GZIP Compress", false);
-        compress.addActionListener(_ -> Config.getInstance().setCompress(compress.isSelected()));
+        compress.addActionListener(_ -> Context.getInstance().setCompress(compress.isSelected()));
         informationPanel.add(compress, gbc);
 
         return informationPanel;
@@ -190,14 +179,17 @@ public class AppGUI {
 
     private void showKeyFileChooser() {
         JFileChooser chooser = new JFileChooser();
-        FileNameExtensionFilter filter = new FileNameExtensionFilter("*.pem", "pem");
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("*.json", "json");
         chooser.setFileFilter(filter);
         chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        if (chooser.showOpenDialog(frame) == JFileChooser.APPROVE_OPTION) {
-            var bytes = readFileToByteArray(chooser.getSelectedFile());
-            var key = new String(bytes);
-            keyTextField.setText(key);
-            Config.getInstance().setEncryptionKey(key);
+        if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            try {
+                var aesInfo = FileUtils.jsonFromFile(chooser.getSelectedFile(), AESInfo.class);
+                keyTextField.setText(aesInfo.getKey().toUpperCase());
+                Context.getInstance().setAESInfo(aesInfo);
+            } catch (IOException e) {
+                showPopupMessage(e.getMessage());
+            }
             enableEncryptButton();
         }
     }
@@ -205,13 +197,13 @@ public class AppGUI {
     private void showOutputDirectoryChooser() {
         JFileChooser chooser = new JFileChooser();
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        if (chooser.showOpenDialog(frame) == JFileChooser.APPROVE_OPTION) {
+        if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             String path = chooser.getSelectedFile().getAbsolutePath();
             if (!FileUtils.isEmpty(path)) {
-                JOptionPane.showMessageDialog(null, "Output path must be empty");
+                showPopupMessage("Output path must be empty");
                 return;
             }
-            Config.getInstance().setOutputDir(path);
+            Context.getInstance().setOutputDir(path);
             outputTextField.setText(path);
             enableEncryptButton();
         }
@@ -220,40 +212,23 @@ public class AppGUI {
     private void showInputDirectoryChooser() {
         JFileChooser chooser = new JFileChooser();
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        if (chooser.showOpenDialog(frame) == JFileChooser.APPROVE_OPTION) {
+        if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             String path = chooser.getSelectedFile().getAbsolutePath();
             if (FileUtils.exists(path) && FileUtils.isEmpty(path)) {
-                JOptionPane.showMessageDialog(null, "Directory cannot be empty");
+                showPopupMessage("Directory cannot be empty");
                 return;
             }
-            Config.getInstance().setInputDir(path);
+            Context.getInstance().setInputDir(path);
             var loadedInputFiles = InputFile.decodeAllInDir();
             InputFile.getLoadedFiles().addAll(loadedInputFiles);
 
             unEncryptedModelsTextArea.setText("");
             for (var m : loadedInputFiles) {
-                unEncryptedModelsTextArea.append(m.getName() + "\n");
+                unEncryptedModelsTextArea.append(m.name() + "\n");
             }
 
             enableEncryptButton();
             inputTextField.setText(path);
-        }
-    }
-
-    private void showConfigFileChooser(boolean isSave) {
-        JFileChooser chooser = new JFileChooser();
-        FileNameExtensionFilter filter = new FileNameExtensionFilter("*.json", "json");
-        chooser.setFileFilter(filter);
-        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-
-        int result = isSave ? chooser.showSaveDialog(frame) : chooser.showOpenDialog(frame);
-        if (result == JFileChooser.APPROVE_OPTION) {
-            String path = chooser.getSelectedFile().getAbsolutePath();
-            if (!FileUtils.isEmpty(path)) {
-                JOptionPane.showMessageDialog(null, "Output path must be empty");
-                return;
-            }
-            outputTextField.setText(path);
         }
     }
 
@@ -267,39 +242,19 @@ public class AppGUI {
         return modelsPanel;
     }
 
-    private void generateKeyAction() {
-            JFileChooser chooser = new JFileChooser();
-            chooser.setSelectedFile(new File("key.pem"));
-            FileNameExtensionFilter filter = new FileNameExtensionFilter("*.pem", ".pem");
-            chooser.setFileFilter(filter);
-            int opt = chooser.showSaveDialog(frame);
-            if(opt == JFileChooser.APPROVE_OPTION) {
-                var file = chooser.getSelectedFile();
-                if(!file.getName().endsWith(".pem")) {
-                    file = new File(file.getAbsolutePath() + ".pem");
-                }
-                try(FileWriter fw = new FileWriter(file)) {
-                    String newKey = KeyUtils.GenerateBase64Key();
-                    fw.write(newKey);
-                    keyTextField.setText(newKey);
-                } catch (Exception e) {
-                    JOptionPane.showMessageDialog(null, "Cannot create .pem file: " + e.getMessage());
-                }
-            }
-    }
 
     private void enableEncryptButton() {
-        var config = Config.getInstance();
-        if(config.getInputDir() != null && config.getOutputDir() != null && config.getEncryptionKey() != null) {
+        var context = Context.getInstance();
+        if (context.getInputDir() != null && context.getOutputDir() != null && context.getKeyAndCipher() != null) {
             encryptButton.setEnabled(true);
         }
     }
 
     private void encryptAction() {
-        var config = Config.getInstance();
+        var config = Context.getInstance();
 
-        if (config.getEncryptionKey() == null) {
-            showError("Encryption Key cannot be empty");
+        if (config.getKeyAndCipher() == null) {
+            showPopupMessage("Encryption Key and Cipher cannot be empty");
             return;
         }
 
@@ -307,20 +262,20 @@ public class AppGUI {
         String outputPath = String.valueOf(config.getOutputDir());
 
         if (!FileUtils.exists(outputPath)) {
-            showError("Cannot find output path: " + outputPath);
+            showPopupMessage("Cannot find output path: " + outputPath);
             return;
         }
 
-        String unpackedPath = outputPath + "/unpacked/";
-        String packedPath = outputPath + "/packed/";
+        var unpackedPath = outputPath + "/unpacked/";
+        var packedPath = outputPath + "/packed/";
 
         if (!config.isPack()) {
             processIndividualFiles(unpackedPath);
         } else {
-            processPackedFiles(unpackedPath);
+            processPackedFiles(packedPath);
         }
 
-        JOptionPane.showMessageDialog(null, "Encrypted Models successfully");
+        showPopupMessage("Encrypted Models successfully");
         encryptButton.setEnabled(true);
     }
 
@@ -329,53 +284,60 @@ public class AppGUI {
         var loadedInputFiles = InputFile.getLoadedFiles();
 
         for (var inputFile : loadedInputFiles) {
-            byte[] encryptedData = encryptData(inputFile.getData());
+            byte[] encryptedData = encryptData(inputFile.data());
+            if(encryptedData == null) {
+                return;
+            }
 
-            if (Config.getInstance().isCompress()) {
+            if (Context.getInstance().isCompress()) {
                 try {
-                    String compressedName = FilenameUtils.removeExtension(inputFile.getName()) + ".gz";
+                    String compressedName = FilenameUtils.removeExtension(inputFile.name()) + ".gz";
                     CompressionUtils.compressFile(encryptedData, unpackedPath + compressedName);
                 } catch (Exception e) {
-                    showError("Cannot compress file: " + e.getMessage());
+                    showPopupMessage("Cannot compress file: " + e.getMessage());
                 }
             } else {
-                saveFile(encryptedData, unpackedPath + inputFile.getName());
+                saveFile(encryptedData, unpackedPath + inputFile.name());
             }
         }
     }
 
     private void processPackedFiles(String packedPath) {
-        byte[] buffer = InputFile.packLoadedFiles();
-        byte[] encryptedData = encryptData(buffer);
+        var buffer = InputFile.packLoadedFiles();
+        var encryptedData = encryptData(buffer);
+        if(encryptedData == null) {
+            return;
+        }
+
         createDirectory(packedPath);
 
-        if (Config.getInstance().isCompress()) {
+        if (Context.getInstance().isCompress()) {
             try {
                 CompressionUtils.compressFile(encryptedData, packedPath + "packed.gz");
             } catch (RuntimeException | IOException e) {
-                showError("Cannot pack: " + e.getMessage());
+                showPopupMessage("Cannot pack: " + e.getMessage());
             }
         } else {
             saveFile(encryptedData, packedPath + "packed.dat");
         }
 
-        new PackedInputFileTableViewer();
+        PackedInputFileTableViewer.open();
     }
 
-    private void showError(String message) {
+    private static void showPopupMessage(String message) {
         JOptionPane.showMessageDialog(null, message);
     }
 
-    private static byte[] encryptData(byte[] data)  {
+    private static byte[] encryptData(byte[] data) {
+        var aesInfo = Context.getInstance().getAESInfo();
+        aesInfo.initSecretKeyAndCipher();
+
         try {
-            var key = Config.getInstance().getEncryptionKey();
-            var secretKey = loadAESKey(key);
-            var cipher = Cipher.getInstance("AES");
-            cipher.init(Cipher.ENCRYPT_MODE, secretKey);
-            return cipher.doFinal(data);
-        } catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException | NoSuchPaddingException |
-                 NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
+            return aesInfo.getCipherInstance().doFinal(data);
+        } catch (IllegalBlockSizeException | BadPaddingException e) {
+            showPopupMessage(e.getMessage());
         }
+        return null;
     }
+
 }

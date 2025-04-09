@@ -1,6 +1,6 @@
 package org.john.core.InputFile;
 
-import org.john.core.config.Config;
+import org.john.core.context.Context;
 import org.john.core.utils.FileUtils;
 
 import javax.swing.*;
@@ -9,34 +9,26 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-public class InputFile {
+public record InputFile(String name, byte[] data) {
 
     private static final List<InputFile> loadedFiles = new ArrayList<>();
-
-    final String name;
-    final byte[] data;
-
-    public InputFile(String name, byte[] data) {
-        this.name = name;
-        this.data = data;
-    }
 
     public static InputFile decode(File file) {
         return new InputFile(file.getName(), FileUtils.readFileToByteArray(file));
     }
 
     public byte[] encode() {
-        var config = Config.getInstance();
+        var config = Context.getInstance();
         int length = getBufferLength();
 
         var buffer = ByteBuffer.allocate(length);
 
-        if(config.isIncludeFileName()) {
+        if (config.isIncludeFileName()) {
             buffer.putInt(name.length());
             buffer.put(name.getBytes());
         }
 
-        if(config.isIncludeFileLength()) {
+        if (config.isIncludeFileLength()) {
             buffer.putInt(data.length);
         }
 
@@ -45,15 +37,15 @@ public class InputFile {
     }
 
     public int getBufferLength() {
-        var config = Config.getInstance();
+        var config = Context.getInstance();
         int length = data.length;
 
-        if(config.isIncludeFileName()) {
+        if (config.isIncludeFileName()) {
             length += 4;
             length += name.getBytes().length;
         }
 
-        if(config.isIncludeFileLength()) {
+        if (config.isIncludeFileLength()) {
             length += 4;
         }
 
@@ -61,16 +53,16 @@ public class InputFile {
     }
 
     public static List<InputFile> decodeAllInDir() {
-        var path = String.valueOf(Config.getInstance().getInputDir());
+        var path = String.valueOf(Context.getInstance().getInputDir());
         var directory = new File(path);
         var inputFiles = new ArrayList<InputFile>();
 
-        if(!directory.exists()) {
+        if (!directory.exists()) {
             JOptionPane.showMessageDialog(null, "Directory does not exist");
             return inputFiles;
         }
 
-        if(FileUtils.isEmpty(path)) {
+        if (FileUtils.isEmpty(path)) {
             JOptionPane.showMessageDialog(null, "Empty path");
             return inputFiles;
         }
@@ -83,22 +75,15 @@ public class InputFile {
         return inputFiles;
     }
 
-    public static byte[] packLoadedFiles() {;
+    public static byte[] packLoadedFiles() {
+        ;
         var loadedFiles = getLoadedFiles();
         var buffer = new ByteArrayOutputStream();
 
-        for(var model : loadedFiles)
+        for (var model : loadedFiles)
             buffer.writeBytes(model.encode());
 
         return buffer.toByteArray();
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public byte[] getData() {
-        return data;
     }
 
     public static List<InputFile> getLoadedFiles() {
